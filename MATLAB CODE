@@ -1,0 +1,98 @@
+#deblurring techniques
+clc;
+close all;
+y = imread('cameraman.tif');
+y = im2double(y);
+figure, imshow(y);
+PSF = fspecial('disk', 8);
+yblur = conv2(y, PSF);
+figure, imshow(yblur);
+%wiener deconvolution
+x = deconvwnr(yblur, PSF, 0.005);
+figure, imshow(x)
+%using blind deconv
+psf2 = fspecial('disk', 5.4);
+x = deconvblind (yblur, PSF, 18);
+figure, imshow(x)
+#colorimageprocessing
+close all;
+clear all;
+clc;
+A=imread('C:\Users\SIRISHA MOTURU\Documents\MATLAB\WhatsApp Image 2024-02-27 at 9.35.57 AM.jpeg');
+subplot(2,4,1)
+imshow(A);
+title('original image');
+
+B=imadd(A,100);
+subplot(2,4,2);
+imshow(B);
+title('intensity added image');
+
+C=imcomplement(A);
+subplot(2,4,3)
+imshow(C);
+title('complement image');
+A=im2double(A);
+red_ch1=A(:,:,1);
+green_ch1=A(:,:,2);
+blue_ch1=A(:,:,3);
+Amp_Factor=1.33;
+red_ch1=(red_ch1*Amp_Factor);
+rgbImage=cat(3,red_ch1,green_ch1,blue_ch1);
+subplot(2,4,5)
+imshow(rgbImage);
+title('color increased image');
+
+w=fspecial('average',[5 5]);
+red=A(:,:,1);
+green=A(:,:,2);
+blue=A(:,:,3);
+R=imfilter(red,w);
+G=imfilter(green,w);
+B=imfilter(blue,w);
+RGB=cat(3,R,G,B);
+subplot(2,4,6);
+imshow(RGB);
+title('each rgb LPF image');
+
+M=rgb2hsv(A);
+Hue=M(:,:,1);
+Saturation=M(:,:,2);
+Value=M(:,:,3);
+DD=imfilter(Value,w);
+HSV_cat=cat(3,Hue,Saturation,DD);
+RGB_cat=hsv2rgb(HSV_cat);
+subplot(2,4,7)
+imshow(RGB_cat);
+title('only inetensity of HSI LPF image');
+
+diff_image=imsubtract(RGB,RGB_cat);
+subplot(2,4,8);
+imshow(diff_image);
+title('difference image');
+#filters
+close all
+clear
+clc
+A=imread('C:\Users\SIRISHA MOTURU\Documents\MATLAB\WhatsApp Image 2024-02-27 at 9.35.57 AM.jpeg');
+A=double(rgb2gray(A));
+[M,N]=size(A);
+h=ones(5,5)/25;
+Freq_a=fft2(A);
+Freq_h=fft2(h,M,N);
+B=real(ifft2(Freq_h.*Freq_a))+25*randn(M,N);
+Freq_b=fft2(B);
+pow_b=abs(Freq_b).^2/(M*N);
+sigma=50;
+gamma=1;
+alpha=1;
+sFreq_h=Freq_h.*(abs(Freq_h)>0)+1/gamma*(abs(Freq_h)==0);
+iFreq_h=1./sFreq_h;
+iFreq_h=iFreq_h.*(abs(Freq_h)*gamma>1)+gamma*abs(sFreq_h).*iFreq_h.*(abs(sFreq_h)*gamma<=1);
+pow_b=pow_b.*(pow_b>sigma^2)+sigma^2*(pow_b<=sigma^2);
+Freq_g=iFreq_h.*(pow_b-sigma^2)./(pow_b-(1-alpha)*sigma^2);
+Res_Freq_a=Freq_g.*Freq_b;
+Res_a=real(ifft2(Res_Freq_a));
+imshow(uint8(A));title('original image')
+figure,imshow(uint8(B)),title('degraded image')
+figure,imshow(uint8(Res_a)),title('restored image after wiener filter')
